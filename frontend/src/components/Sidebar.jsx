@@ -126,7 +126,7 @@ const NAV = {
           name: "Employee",
           subItems: [
             { name: "Employee List", path: "/users", icon: "ti ti-list" },
-            { name: "Employee Add", path: "/users?action=add", icon: "ti ti-user-plus" },
+            { name: "New Employee", path: "/users/add", icon: "ti ti-user-plus" },
           ],
         },
       ],
@@ -263,7 +263,7 @@ const getRoleGroups = (role, isHead = false) => {
           name: "Employee",
           subItems: [
             { name: "Employee List", path: "/users", icon: "ti ti-list" },
-            { name: "Employee Add", path: "/users?action=add", icon: "ti ti-user-plus" },
+            { name: "New Employee", path: "/users/add", icon: "ti ti-user-plus" },
           ],
         },
       ],

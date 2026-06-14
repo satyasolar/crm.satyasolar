@@ -22,6 +22,7 @@ import CreateCase from "./components/CreateCase";
 import Users from "./components/Users";
 import Profile from "./components/Profile";
 import Support from "./components/Support";
+import RegisterEmployee from "./pages/RegisterEmployee";
 
 import QuotationForm from "./components/QuotationForm";
 import QuotationList from "./components/QuotationList";
@@ -463,6 +464,14 @@ function App() {
             element={
               <ProtectedRoute role="admin">
                 <Users onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/add"
+            element={
+              <ProtectedRoute role="admin">
+                <RegisterEmployee onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />

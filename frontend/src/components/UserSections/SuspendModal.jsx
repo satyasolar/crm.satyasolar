@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { STATUS_OPTIONS } from "./usersConstants";
 
-const SuspendModal = ({ ctx }) => {
+const ChangeStatusModal = ({ ctx }) => {
   const {
     showSuspendModal,
     setShowSuspendModal,
@@ -10,7 +10,7 @@ const SuspendModal = ({ ctx }) => {
     actionLoading,
   } = ctx;
 
-  // Default to tomorrow
+  const [status, setStatus] = useState("inactive");
   const [endDate, setEndDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -19,56 +19,94 @@ const SuspendModal = ({ ctx }) => {
 
   if (!showSuspendModal || !selectedUser) return null;
 
+  const isSuspend = status === "suspended";
+
+  const handleConfirm = () => {
+    handleStatusChange(selectedUser.id, status, isSuspend ? endDate : null);
+  };
+
   return (
-    <div className="modal-backdrop">
-      <div className="modal" style={{ maxWidth: "360px" }}>
-        <div style={{ padding: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <AlertTriangle style={{ width: "20px", height: "20px", color: "#d97706" }} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-1)", margin: 0 }}>
-                Suspend Member
-              </h3>
-              <p style={{ fontSize: "13px", color: "var(--text-4)", margin: "4px 0 0" }}>
-                Temporarily block login access.
-              </p>
-            </div>
-          </div>
-          
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-2)", marginBottom: "8px" }}>
-              Suspend {selectedUser.name} until which date?
-            </label>
-            <input
-              type="date"
-              min={new Date().toISOString().split("T")[0]}
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="input"
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)" }}
-            />
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+      onClick={() => setShowSuspendModal(false)}
+    >
+      <div
+        style={{
+          background: "#fff", borderRadius: "10px", width: "300px",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.22)", overflow: "hidden",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ background: "#1e2a6e", padding: "14px 18px" }}>
+          <span style={{ color: "#fff", fontWeight: 700, fontSize: "15px" }}>Change Status</span>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "18px" }}>
+          {/* Status Dropdown */}
+          <div style={{ marginBottom: isSuspend ? "14px" : "20px", position: "relative" }}>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 32px 10px 12px",
+                fontSize: "14px", fontWeight: 600,
+                border: "1.5px solid #3b4cb8", borderRadius: "6px",
+                appearance: "none", cursor: "pointer", outline: "none",
+                background: "#fff", color: "#1e293b",
+                boxShadow: "0 0 0 2px rgba(59,76,184,0.1)",
+              }}
+            >
+              <option value="" disabled>Select Status</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#6b7280", fontSize: "12px" }}>▼</span>
           </div>
 
-          <div style={{ display: "flex", gap: "10px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
+          {/* Date picker only for suspend */}
+          {isSuspend && (
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#6b7280", marginBottom: "6px" }}>
+                Suspend until
+              </label>
+              <input
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "9px 12px", fontSize: "14px", fontWeight: 500,
+                  border: "1.5px solid #d1d5db", borderRadius: "6px",
+                  outline: "none", background: "#f9fafb",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: "10px" }}>
             <button
               onClick={() => setShowSuspendModal(false)}
-              className="btn btn-ghost"
-              style={{ flex: 1, padding: "10px", borderRadius: "8px" }}
+              style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1.5px solid #e5e7eb", background: "#fff", color: "#374151", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
               disabled={actionLoading}
             >
               Cancel
             </button>
             <button
-              onClick={() => {
-                handleStatusChange(selectedUser.id, "suspended", endDate);
-              }}
-              className="btn"
-              style={{ flex: 1, padding: "10px", borderRadius: "8px", background: "#d97706", color: "#fff", border: "none", fontWeight: 600 }}
+              onClick={handleConfirm}
+              style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "none", background: "#3b4cb8", color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}
               disabled={actionLoading}
             >
-              {actionLoading ? "Suspending..." : "Confirm"}
+              {actionLoading ? "Saving…" : "Confirm"}
             </button>
           </div>
         </div>
@@ -77,4 +115,4 @@ const SuspendModal = ({ ctx }) => {
   );
 };
 
-export default SuspendModal;
+export default ChangeStatusModal;

@@ -141,6 +141,7 @@ serve(async (req: Request) => {
         role,
         phone,
         dob,
+        designation: body.designation || "",
         is_head: isHead || false,
         status: "active",
         is_first_login: true,
@@ -332,7 +333,7 @@ serve(async (req: Request) => {
       let query = supabase
         .from("profiles")
         .select(
-          "id, name, role, phone, dob, status, is_first_login, created_at, employee_id, is_head",
+          "id, name, role, phone, dob, status, is_first_login, created_at, employee_id, is_head, designation, suspended_until",
         );
       
       // If Department Head, only show their own department
@@ -360,6 +361,7 @@ serve(async (req: Request) => {
           role: p?.role || "sales",
           phone: p?.phone || "",
           dob: p?.dob || "",
+          designation: p?.designation || "",
           isHead: p?.is_head || false,
           status: p?.status || "inactive",
           suspendedUntil: p?.suspended_until || null,
@@ -374,7 +376,7 @@ serve(async (req: Request) => {
 
     // ── UPDATE USER ────────────────────────────────────────────────────────
     if (action === "update_user") {
-      const { userId, name, role, status } = body;
+      const { userId, name, role, status, designation } = body;
       if (!userId) return jsonResponse({ message: "userId required" }, 400);
 
       // Department Head restrictions
@@ -392,6 +394,7 @@ serve(async (req: Request) => {
       if (name !== undefined) updatePayload.name = name;
       if (role !== undefined) updatePayload.role = role;
       if (status !== undefined) updatePayload.status = status;
+      if (designation !== undefined) updatePayload.designation = designation;
 
       const { error } = await supabase
         .from("profiles")
@@ -446,6 +449,9 @@ serve(async (req: Request) => {
         ban_duration = `${hours}h`;
         
         suspended_until = suspendEnd.toISOString();
+      } else if (status === "terminate" || status === "resigned") {
+        // Terminate/Resign: also permanently block login
+        ban_duration = "876000h";
       } else if (status !== "active") {
         return jsonResponse({ message: "Invalid status" }, 400);
       }
