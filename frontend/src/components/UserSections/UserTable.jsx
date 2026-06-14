@@ -16,13 +16,13 @@ const UserTable = ({ ctx }) => {
   const canAdmin = loggedInRole === "admin" || isHeadUser;
 
   const thStyle = {
-    padding: "10px 12px", fontSize: "12px", fontWeight: 700,
+    padding: "10px 8px", fontSize: "11.5px", fontWeight: 700,
     color: "#fff", textAlign: "left", whiteSpace: "nowrap",
     background: "transparent",
   };
 
   const tdStyle = {
-    padding: "10px 12px", fontSize: "13px",
+    padding: "8px 8px", fontSize: "12.5px",
     color: "#374151", verticalAlign: "middle",
     borderBottom: "1px solid #f1f5f9",
   };
@@ -90,13 +90,13 @@ const UserTable = ({ ctx }) => {
 
                   {/* Name */}
                   <td style={tdStyle}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "linear-gradient(135deg,#3b4cb8,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "12px", flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg,#3b4cb8,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "11px", flexShrink: 0 }}>
                         {user.name?.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p style={{ fontWeight: 600, fontSize: "13px", margin: 0, color: "#1e293b" }}>{user.name}</p>
-                        {user.isHead && <span style={{ fontSize: "10px", fontWeight: 700, color: "#6b21a8", background: "#f3e8ff", padding: "1px 5px", borderRadius: "10px" }}>HEAD</span>}
+                        <p style={{ fontWeight: 600, fontSize: "12.5px", margin: 0, color: "#1e293b", whiteSpace: "nowrap" }}>{user.name}</p>
+                        {user.isHead && <span style={{ fontSize: "9px", fontWeight: 700, color: "#6b21a8", background: "#f3e8ff", padding: "1px 5px", borderRadius: "10px" }}>HEAD</span>}
                       </div>
                     </div>
                   </td>
@@ -171,9 +171,18 @@ const UserTable = ({ ctx }) => {
 
                   {/* Registration Date */}
                   <td style={tdStyle}>
-                    <span style={{ fontSize: "12px", color: "#6b7280" }}>
-                      {user.createdAt ? new Date(user.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
-                    </span>
+                    {user.createdAt ? (
+                      <div>
+                        <span style={{ fontSize: "11.5px", color: "#475569", display: "block", whiteSpace: "nowrap" }}>
+                          {new Date(user.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                        </span>
+                        <span style={{ fontSize: "10px", color: "#9ca3af", display: "block" }}>
+                          {new Date(user.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>—</span>
+                    )}
                   </td>
 
                   {/* Actions */}
