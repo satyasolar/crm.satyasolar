@@ -12,6 +12,7 @@ import DeleteModal from "./UserSections/DeleteModal";
 import ResetPasswordModal from "./UserSections/ResetPasswordModal";
 import ChangeStatusModal from "./UserSections/SuspendModal";
 import EditDesignationModal from "./UserSections/EditDesignationModal";
+import EmployeeDetailsPanel from "./UserSections/EmployeeDetailsPanel";
 
 const Users = ({ onLogout }) => {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,7 @@ const Users = ({ onLogout }) => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showDesignationModal, setShowDesignationModal] = useState(false);
+  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newPassword, setNewPassword] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -119,6 +121,7 @@ const Users = ({ onLogout }) => {
     showResetModal, setShowResetModal,
     showSuspendModal, setShowSuspendModal,
     showDesignationModal, setShowDesignationModal,
+    showDetailsPanel, setShowDetailsPanel,
     newPassword, setNewPassword,
     actionLoading,
     handleDeleteUser, handleResetPassword, handleStatusChange, handleDesignationChange,
@@ -165,6 +168,14 @@ const Users = ({ onLogout }) => {
       <ResetPasswordModal ctx={ctx} />
       <ChangeStatusModal ctx={ctx} />
       <EditDesignationModal ctx={ctx} />
+      {showDetailsPanel && selectedUser && (
+        <EmployeeDetailsPanel
+          userId={selectedUser.id}
+          isAdmin={loggedInRole === "admin" || localStorage.getItem("is_head") === "true"}
+          isOwnProfile={false}
+          onClose={() => { setShowDetailsPanel(false); fetchUsers(); }}
+        />
+      )}
     </div>
   );
 };

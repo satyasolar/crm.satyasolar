@@ -1,6 +1,6 @@
 import React from "react";
-import { Key, Trash2, Edit2 } from "lucide-react";
-import { getRoleMeta, getStatusMeta } from "./usersConstants";
+import { Trash2, Edit2 } from "lucide-react";
+import { getRoleMeta, getStatusMeta, ROLE_OPTIONS } from "./usersConstants";
 import { useNavigate } from "react-router-dom";
 
 const UserTable = ({ ctx }) => {
@@ -8,7 +8,7 @@ const UserTable = ({ ctx }) => {
     filtered, users, search,
     loggedInRole,
     setSelectedUser, setShowResetModal, setShowDeleteModal,
-    setShowSuspendModal, setShowDesignationModal,
+    setShowSuspendModal, setShowDesignationModal, setShowDetailsPanel,
     handleStatusChange,
   } = ctx;
   const navigate = useNavigate();
@@ -62,6 +62,7 @@ const UserTable = ({ ctx }) => {
             <tr style={{ background: "#1e2a6e" }}>
               <th style={thStyle}>Unique ID</th>
               <th style={thStyle}>Name</th>
+              <th style={thStyle}>Dept</th>
               <th style={thStyle}>Designation</th>
               <th style={thStyle}>Email</th>
               <th style={thStyle}>Mobile</th>
@@ -98,6 +99,18 @@ const UserTable = ({ ctx }) => {
                         {user.isHead && <span style={{ fontSize: "10px", fontWeight: 700, color: "#6b21a8", background: "#f3e8ff", padding: "1px 5px", borderRadius: "10px" }}>HEAD</span>}
                       </div>
                     </div>
+                  </td>
+
+                  {/* Dept */}
+                  <td style={tdStyle}>
+                    {(() => {
+                      const rm = ROLE_OPTIONS.find(r => r.value === user.role);
+                      return rm ? (
+                        <span style={{ padding: "3px 8px", borderRadius: "4px", background: rm.bg, color: rm.color, fontWeight: 700, fontSize: "11px", border: `1px solid ${rm.border}`, whiteSpace: "nowrap" }}>
+                          {rm.emoji} {rm.label}
+                        </span>
+                      ) : <span style={{ fontSize: "12px", color: "#9ca3af" }}>{user.role || "—"}</span>;
+                    })()}
                   </td>
 
                   {/* Designation */}
@@ -169,11 +182,11 @@ const UserTable = ({ ctx }) => {
                       {isCurrentUserAdmin && (
                         <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
                           <button
-                            title="Reset password"
-                            onClick={() => { setSelectedUser(user); setShowResetModal(true); }}
+                            title="Edit employee details"
+                            onClick={() => { setSelectedUser(user); setShowDetailsPanel(true); }}
                             style={{ width: "28px", height: "28px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                           >
-                            <Key style={{ width: "12px", height: "12px", color: "#2563eb" }} />
+                            <Edit2 style={{ width: "12px", height: "12px", color: "#2563eb" }} />
                           </button>
                           <button
                             title="Remove employee"

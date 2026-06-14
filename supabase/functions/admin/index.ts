@@ -53,9 +53,71 @@ serve(async (req: Request) => {
   );
 
   try {
-    const adminUser = await getAdminUser(req, supabase);
+    const supabaseServiceRole = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
     const body = await req.json().catch(() => ({}));
     const action = body.action || "";
+
+    // ── SELF-SERVICE ACTIONS (no admin required) ──────────────────────────
+    // These actions are available to ALL authenticated users (employees, etc.)
+    const selfServiceActions = ["get_own_details", "update_own_details", "complete_first_login", "update_own_name"];
+    if (selfServiceActions.includes(action)) {
+      const authHeader = req.headers.get("Authorization");
+      const token = (authHeader || "").replace("Bearer ", "");
+      const { data: { user }, error: authErr } = await supabaseServiceRole.auth.getUser(token);
+      if (authErr || !user) return jsonResponse({ message: "Unauthorized" }, 401);
+
+      if (action === "get_own_details") {
+        const { data: profile, error } = await supabaseServiceRole
+          .from("profiles")
+          .select("id, name, role, phone, dob, designation, status, is_head, employee_id, city, state, country, address, gender, emergency_contact_name, emergency_contact_phone, bank_name, branch_name, account_number, ifsc_code, experience_years, company_name, work_location, last_ctc, aadhar_card, pan_card, created_at")
+          .eq("id", user.id)
+          .single();
+        if (error) throw error;
+        return jsonResponse({ ...profile, email: user.email || "" });
+      }
+
+      if (action === "update_own_details") {
+        const fields = { ...body };
+        delete fields.action;
+        const allowed = [
+          "name", "phone", "dob", "gender", "city", "state", "country",
+          "address", "emergency_contact_name", "emergency_contact_phone",
+          "bank_name", "branch_name", "account_number", "ifsc_code",
+          "experience_years", "company_name", "work_location", "last_ctc", "aadhar_card", "pan_card",
+        ];
+        const updatePayload: Record<string, unknown> = {};
+        for (const key of allowed) {
+          if (fields[key] !== undefined) updatePayload[key] = fields[key];
+        }
+        if (Object.keys(updatePayload).length === 0) return jsonResponse({ message: "No fields to update" }, 400);
+        const { error } = await supabaseServiceRole.from("profiles").update(updatePayload).eq("id", user.id);
+        if (error) throw error;
+        if (updatePayload.name) {
+          await supabaseServiceRole.auth.admin.updateUserById(user.id, { user_metadata: { name: updatePayload.name } });
+        }
+        return jsonResponse({ message: "Profile updated successfully" });
+      }
+
+      if (action === "update_own_name") {
+        const { name } = body;
+        if (!name || !name.trim()) return jsonResponse({ message: "Name cannot be empty" }, 400);
+        const { error } = await supabaseServiceRole.from("profiles").update({ name: name.trim() }).eq("id", user.id);
+        if (error) throw error;
+        return jsonResponse({ message: "Name updated successfully" });
+      }
+
+      if (action === "complete_first_login") {
+        await supabaseServiceRole.from("profiles").update({ is_first_login: false }).eq("id", user.id);
+        return jsonResponse({ message: "First login marked complete" });
+      }
+    }
+
+    // ── ADMIN/HEAD ACTIONS ────────────────────────────────────────────────
+    const supabase = supabaseServiceRole; // reuse
+    const adminUser = await getAdminUser(req, supabase);
 
     // ── CREATE USER ────────────────────────────────────────────────────────
     if (action === "create_user") {
@@ -577,6 +639,117 @@ serve(async (req: Request) => {
       if (error) throw error;
 
       return jsonResponse({ message: "Name updated successfully" });
+    }
+
+    // ── GET EMPLOYEE DETAILS ─────────────────────────────────────────────
+    if (action === "get_employee_details") {
+      const { userId } = body;
+      if (!userId) return jsonResponse({ message: "userId required" }, 400);
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("id, name, role, phone, dob, designation, status, is_head, employee_id, city, state, country, address, gender, emergency_contact_name, emergency_contact_phone, bank_name, branch_name, account_number, ifsc_code, experience_years, company_name, work_location, last_ctc, aadhar_card, pan_card, created_at")
+        .eq("id", userId)
+        .single();
+      if (error) throw error;
+
+      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers();
+      const authUser = authUsers.find((u: any) => u.id === userId);
+
+      return jsonResponse({ ...profile, email: authUser?.email || "" });
+    }
+
+    // ── UPDATE EMPLOYEE DETAILS (admin edits any employee) ───────────────
+    if (action === "update_employee_details") {
+      const { userId, ...fields } = body;
+      if (!userId) return jsonResponse({ message: "userId required" }, 400);
+
+      // Department Head restrictions
+      if (adminUser.role !== "admin") {
+        const { data: targetProfile } = await supabase.from("profiles").select("role, is_head").eq("id", userId).single();
+        if (!targetProfile || targetProfile.role !== adminUser.role) {
+          return jsonResponse({ message: "You can only edit users in your own department" }, 403);
+        }
+        if (targetProfile.is_head) {
+          return jsonResponse({ message: "You cannot edit another Department Head" }, 403);
+        }
+      }
+
+      const allowed = [
+        "name", "phone", "dob", "gender", "designation", "city", "state", "country",
+        "address", "emergency_contact_name", "emergency_contact_phone",
+        "bank_name", "branch_name", "account_number", "ifsc_code",
+        "experience_years", "company_name", "work_location", "last_ctc", "aadhar_card", "pan_card",
+      ];
+
+      const updatePayload: Record<string, unknown> = {};
+      for (const key of allowed) {
+        if (fields[key] !== undefined) updatePayload[key] = fields[key];
+      }
+
+      if (Object.keys(updatePayload).length === 0) return jsonResponse({ message: "No fields to update" }, 400);
+
+      const { error } = await supabase.from("profiles").update(updatePayload).eq("id", userId);
+      if (error) throw error;
+
+      if (updatePayload.name) {
+        await supabase.auth.admin.updateUserById(userId, { user_metadata: { name: updatePayload.name } });
+      }
+
+      return jsonResponse({ message: "Employee details updated successfully" });
+    }
+
+    // ── UPDATE OWN DETAILS (any authenticated user edits their own profile) ─
+    if (action === "update_own_details") {
+      const authHeader = req.headers.get("Authorization");
+      const token = (authHeader || "").replace("Bearer ", "");
+      const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr || !user) return jsonResponse({ message: "Unauthorized" }, 401);
+
+      const { ...fields } = body;
+      delete fields.action;
+
+      // Employees cannot change their role, designation, or status
+      const allowed = [
+        "name", "phone", "dob", "gender", "city", "state", "country",
+        "address", "emergency_contact_name", "emergency_contact_phone",
+        "bank_name", "branch_name", "account_number", "ifsc_code",
+        "experience_years", "company_name", "work_location", "last_ctc", "aadhar_card", "pan_card",
+      ];
+
+      const updatePayload: Record<string, unknown> = {};
+      for (const key of allowed) {
+        if (fields[key] !== undefined) updatePayload[key] = fields[key];
+      }
+
+      if (Object.keys(updatePayload).length === 0) return jsonResponse({ message: "No fields to update" }, 400);
+
+      const { error } = await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      if (error) throw error;
+
+      if (updatePayload.name) {
+        localStorage && null; // just ignore, server side
+        await supabase.auth.admin.updateUserById(user.id, { user_metadata: { name: updatePayload.name } });
+      }
+
+      return jsonResponse({ message: "Profile updated successfully" });
+    }
+
+    // ── GET OWN DETAILS (any authenticated user) ─────────────────────────
+    if (action === "get_own_details") {
+      const authHeader = req.headers.get("Authorization");
+      const token = (authHeader || "").replace("Bearer ", "");
+      const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr || !user) return jsonResponse({ message: "Unauthorized" }, 401);
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("id, name, role, phone, dob, designation, status, is_head, employee_id, city, state, country, address, gender, emergency_contact_name, emergency_contact_phone, bank_name, branch_name, account_number, ifsc_code, experience_years, company_name, work_location, last_ctc, aadhar_card, pan_card, created_at")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+
+      return jsonResponse({ ...profile, email: user.email || "" });
     }
 
     return jsonResponse({ message: `Unknown action: ${action}` }, 400);
