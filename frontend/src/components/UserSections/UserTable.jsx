@@ -16,13 +16,13 @@ const UserTable = ({ ctx }) => {
   const canAdmin = loggedInRole === "admin" || isHeadUser;
 
   const thStyle = {
-    padding: "10px 8px", fontSize: "11.5px", fontWeight: 700,
+    padding: "8px 6px", fontSize: "11px", fontWeight: 700,
     color: "#fff", textAlign: "left", whiteSpace: "nowrap",
     background: "transparent",
   };
 
   const tdStyle = {
-    padding: "8px 8px", fontSize: "12.5px",
+    padding: "6px 6px", fontSize: "11.5px",
     color: "#374151", verticalAlign: "middle",
     borderBottom: "1px solid #f1f5f9",
   };
@@ -82,7 +82,7 @@ const UserTable = ({ ctx }) => {
                 >
                   {/* Unique ID */}
                   <td style={tdStyle}>
-                    <a href="#" onClick={(e) => { e.preventDefault(); }} style={{ color: "#3b4cb8", fontWeight: 600, fontSize: "12px", textDecoration: "underline" }}>
+                    <a href="#" onClick={(e) => { e.preventDefault(); }} style={{ color: "#3b4cb8", fontWeight: 600, fontSize: "11px", textDecoration: "underline" }}>
                       {user.employeeId || "N/A"}
                     </a>
                   </td>
@@ -90,12 +90,12 @@ const UserTable = ({ ctx }) => {
                   {/* Name */}
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg,#3b4cb8,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "11px", flexShrink: 0 }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg,#3b4cb8,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "10.5px", flexShrink: 0 }}>
                         {user.name?.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p style={{ fontWeight: 600, fontSize: "12.5px", margin: 0, color: "#1e293b", whiteSpace: "nowrap" }}>{user.name}</p>
-                        {user.isHead && <span style={{ fontSize: "9px", fontWeight: 700, color: "#6b21a8", background: "#f3e8ff", padding: "1px 5px", borderRadius: "10px" }}>HEAD</span>}
+                        <p style={{ fontWeight: 600, fontSize: "11.5px", margin: 0, color: "#1e293b", whiteSpace: "nowrap" }}>{user.name}</p>
+                        {user.isHead && <span style={{ fontSize: "9px", fontWeight: 700, color: "#6b21a8", background: "#f3e8ff", padding: "1px 4px", borderRadius: "10px" }}>HEAD</span>}
                       </div>
                     </div>
                   </td>
@@ -105,24 +105,24 @@ const UserTable = ({ ctx }) => {
                     {(() => {
                       const rm = ROLE_OPTIONS.find(r => r.value === user.role);
                       return rm ? (
-                        <span style={{ padding: "3px 8px", borderRadius: "4px", background: rm.bg, color: rm.color, fontWeight: 700, fontSize: "11px", border: `1px solid ${rm.border}`, whiteSpace: "nowrap" }}>
+                        <span style={{ padding: "2px 6px", borderRadius: "4px", background: rm.bg, color: rm.color, fontWeight: 700, fontSize: "10px", border: `1px solid ${rm.border}`, whiteSpace: "nowrap" }}>
                           {rm.emoji} {rm.label}
                         </span>
-                      ) : <span style={{ fontSize: "12px", color: "#9ca3af" }}>{user.role || "—"}</span>;
+                      ) : <span style={{ fontSize: "11px", color: "#9ca3af" }}>{user.role || "—"}</span>;
                     })()}
                   </td>
 
                   {/* Designation */}
                   <td style={tdStyle}>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      <span style={{ fontSize: "12.5px", color: "#475569" }}>{user.designation || <span style={{ color: "#9ca3af", fontStyle: "italic" }}>Not set</span>}</span>
+                      <span style={{ fontSize: "11.5px", color: "#475569" }}>{user.designation || <span style={{ color: "#9ca3af", fontStyle: "italic" }}>Not set</span>}</span>
                       {isCurrentUserAdmin && (
                         <button
                           title="Edit designation"
                           onClick={() => { setSelectedUser(user); setShowDesignationModal(true); }}
-                          style={{ background: "none", border: "none", padding: "2px 4px", cursor: "pointer", color: "#3b4cb8", opacity: 0.7 }}
+                          style={{ background: "none", border: "none", padding: "2px", cursor: "pointer", color: "#3b4cb8", opacity: 0.7 }}
                         >
-                          <Edit2 style={{ width: "11px", height: "11px" }} />
+                          <Edit2 style={{ width: "10px", height: "10px" }} />
                         </button>
                       )}
                     </div>
@@ -130,12 +130,12 @@ const UserTable = ({ ctx }) => {
 
                   {/* Email */}
                   <td style={tdStyle}>
-                    <span style={{ fontSize: "12.5px", color: "#475569" }}>{user.email}</span>
+                    <span style={{ fontSize: "11px", color: "#475569" }}>{user.email}</span>
                   </td>
 
                   {/* Mobile */}
                   <td style={tdStyle}>
-                    <span style={{ fontSize: "12.5px", color: "#475569" }}>{user.phone || "—"}</span>
+                    <span style={{ fontSize: "11px", color: "#475569" }}>{user.phone || "—"}</span>
                   </td>
 
                   {/* Status */}
@@ -144,20 +144,20 @@ const UserTable = ({ ctx }) => {
                       <button
                         onClick={() => { setSelectedUser(user); setShowSuspendModal(true); }}
                         style={{
-                          padding: "4px 10px", borderRadius: "4px", border: `1px solid ${sm.border}`,
-                          background: sm.bg, color: sm.color, fontWeight: 700, fontSize: "11.5px",
+                          padding: "3px 8px", borderRadius: "4px", border: `1px solid ${sm.border}`,
+                          background: sm.bg, color: sm.color, fontWeight: 700, fontSize: "10.5px",
                           cursor: "pointer", textTransform: "capitalize", whiteSpace: "nowrap",
                         }}
                       >
                         {sm.label}
                         {user.status === "suspended" && user.suspendedUntil && (
-                          <span style={{ display: "block", fontSize: "9.5px", fontWeight: 600, marginTop: "1px" }}>
+                          <span style={{ display: "block", fontSize: "9px", fontWeight: 600, marginTop: "1px" }}>
                             till {new Date(user.suspendedUntil).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                           </span>
                         )}
                       </button>
                     ) : (
-                      <span style={{ padding: "4px 10px", borderRadius: "4px", border: `1px solid ${sm.border}`, background: sm.bg, color: sm.color, fontWeight: 700, fontSize: "11.5px", textTransform: "capitalize" }}>
+                      <span style={{ padding: "3px 8px", borderRadius: "4px", border: `1px solid ${sm.border}`, background: sm.bg, color: sm.color, fontWeight: 700, fontSize: "10.5px", textTransform: "capitalize" }}>
                         {sm.label}
                       </span>
                     )}
@@ -167,15 +167,15 @@ const UserTable = ({ ctx }) => {
                   <td style={tdStyle}>
                     {user.createdAt ? (
                       <div>
-                        <span style={{ fontSize: "11.5px", color: "#475569", display: "block", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: "10.5px", color: "#475569", display: "block", whiteSpace: "nowrap" }}>
                           {new Date(user.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                         </span>
-                        <span style={{ fontSize: "10px", color: "#9ca3af", display: "block" }}>
+                        <span style={{ fontSize: "9.5px", color: "#9ca3af", display: "block" }}>
                           {new Date(user.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </div>
                     ) : (
-                      <span style={{ fontSize: "12px", color: "#6b7280" }}>—</span>
+                      <span style={{ fontSize: "11px", color: "#6b7280" }}>—</span>
                     )}
                   </td>
 
@@ -183,20 +183,20 @@ const UserTable = ({ ctx }) => {
                   {canAdmin && (
                     <td style={{ ...tdStyle, textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
                       {isCurrentUserAdmin && (
-                        <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
+                        <div style={{ display: "flex", justifyContent: "center", gap: "4px" }}>
                           <button
                             title="Edit employee details"
                             onClick={() => { setSelectedUser(user); setShowDetailsPanel(true); }}
-                            style={{ width: "28px", height: "28px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            style={{ width: "24px", height: "24px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                           >
-                            <Edit2 style={{ width: "12px", height: "12px", color: "#2563eb" }} />
+                            <Edit2 style={{ width: "11px", height: "11px", color: "#2563eb" }} />
                           </button>
                           <button
                             title="Remove employee"
                             onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }}
-                            style={{ width: "28px", height: "28px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            style={{ width: "24px", height: "24px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                           >
-                            <Trash2 style={{ width: "12px", height: "12px", color: "#be123c" }} />
+                            <Trash2 style={{ width: "11px", height: "11px", color: "#be123c" }} />
                           </button>
                         </div>
                       )}
