@@ -30,9 +30,9 @@ const UserTable = ({ ctx }) => {
   return (
     <div style={{ background: "#fff", borderRadius: "8px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "hidden" }}>
       {/* Blue Header */}
-      <div style={{ background: "#3b4cb8", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ background: "#3b4cb8", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <h2 style={{ color: "#fff", fontSize: "17px", fontWeight: 700, margin: 0 }}>Employee List</h2>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
           {canAdmin && (
             <button
               onClick={() => navigate("/users/add")}

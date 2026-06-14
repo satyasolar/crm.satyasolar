@@ -141,7 +141,7 @@ const Users = ({ onLogout }) => {
     <div style={{ display: "flex", minHeight: "100vh", background: "#f0f2f5" }}>
       <Sidebar onLogout={onLogout} />
 
-      <main style={{ flex: 1, marginLeft: "var(--main-offset)", padding: "28px 32px" }}>
+      <main style={{ flex: 1, marginLeft: "var(--main-offset)", padding: "28px 32px", minWidth: 0, overflowX: "hidden" }}>
         <Header title="Employee" subtitle="Manage employee accounts and access" onLogout={onLogout} />
 
         {/* Search bar */}
