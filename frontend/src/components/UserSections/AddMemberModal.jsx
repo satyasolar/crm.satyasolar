@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { UserPlus, X, Shield, User, Mail } from "lucide-react";
+import { UserPlus, X, Shield, User, Mail, Phone, Calendar } from "lucide-react";
 import { APP_CONFIG } from "../../config";
 import { ROLE_OPTIONS, fieldStyle, fieldFocusStyle } from "./usersConstants";
 
@@ -7,7 +7,7 @@ const AddMemberModal = ({ ctx }) => {
   const {
     showAddModal, setShowAddModal,
     handleAddSubmit, formData, setFormData,
-    addLoading,
+    addLoading, loggedInRole
   } = ctx;
 
   const [focusedField, setFocusedField] = useState("");
@@ -29,7 +29,7 @@ const AddMemberModal = ({ ctx }) => {
                 <UserPlus style={{ width: "17px", height: "17px", color: "#fff" }} />
               </div>
               <div>
-                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#fff", margin: 0 }}>Add Team Member</h3>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#fff", margin: 0 }}>Add Employee</h3>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", marginTop: "2px" }}>Create a new employee account</p>
               </div>
             </div>
@@ -94,6 +94,45 @@ const AddMemberModal = ({ ctx }) => {
               </div>
             </div>
 
+            {/* Phone Number */}
+            <div>
+              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#1e293b", marginBottom: "8px", letterSpacing: "-0.01em" }}>
+                <Phone style={{ width: "13px", height: "13px", color: "#2563EB" }} /> Phone Number <span style={{ color: "#ef4444", marginLeft: "2px" }}>*</span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <Phone style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", width: "15px", height: "15px", color: focusedField === "phone" ? "#2563EB" : "#94a3b8", pointerEvents: "none", transition: "color 0.2s" }} />
+                <input
+                  type="text"
+                  required
+                  style={focusedField === "phone" ? fieldFocusStyle : fieldStyle}
+                  placeholder="+91 9876543210"
+                  value={formData.phone}
+                  onFocus={() => setFocusedField("phone")}
+                  onBlur={() => setFocusedField("")}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Date of Birth */}
+            <div>
+              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#1e293b", marginBottom: "8px", letterSpacing: "-0.01em" }}>
+                <Calendar style={{ width: "13px", height: "13px", color: "#2563EB" }} /> Date of Birth <span style={{ color: "#ef4444", marginLeft: "2px" }}>*</span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <Calendar style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", width: "15px", height: "15px", color: focusedField === "dob" ? "#2563EB" : "#94a3b8", pointerEvents: "none", transition: "color 0.2s" }} />
+                <input
+                  type="date"
+                  required
+                  style={focusedField === "dob" ? fieldFocusStyle : fieldStyle}
+                  value={formData.dob}
+                  onFocus={() => setFocusedField("dob")}
+                  onBlur={() => setFocusedField("")}
+                  onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                />
+              </div>
+            </div>
+
             {/* Role Selection */}
             <div>
               <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 700, color: "#1e293b", marginBottom: "8px", letterSpacing: "-0.01em" }}>
@@ -103,13 +142,19 @@ const AddMemberModal = ({ ctx }) => {
                 {ROLE_OPTIONS.map((r) => {
                   const isSelected = formData.role === r.value;
                   return (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, role: r.value })}
+                    <div key={r.value} style={{ display: "flex", flexDirection: "column" }}>
+                      <button
+                        type="button"
+                      onClick={() => {
+                        if (loggedInRole === "admin" || r.value === loggedInRole) {
+                          setFormData({ ...formData, role: r.value });
+                        }
+                      }}
                       style={{
                         display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px",
-                        borderRadius: "8px", cursor: "pointer",
+                        borderRadius: "8px", 
+                        cursor: (loggedInRole !== "admin" && r.value !== loggedInRole) ? "not-allowed" : "pointer",
+                        opacity: (loggedInRole !== "admin" && r.value !== loggedInRole) ? 0.5 : 1,
                         border: isSelected ? `2px solid ${r.color}` : "1.5px solid #e2e8f0",
                         background: isSelected ? r.bg : "#fafafa",
                         transition: "all 0.15s ease",
@@ -125,13 +170,37 @@ const AddMemberModal = ({ ctx }) => {
                         </div>
                       )}
                     </button>
-                  );
-                })}
-              </div>
+                    {isSelected && loggedInRole === "admin" && r.value !== "admin" && (
+                      <select
+                        value={formData.isHead ? "head" : "member"}
+                        onChange={(e) => setFormData({ ...formData, isHead: e.target.value === "head" })}
+                        style={{
+                          marginTop: "6px",
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          border: `1px solid ${r.color}50`,
+                          background: "#fff",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: r.color,
+                          cursor: "pointer",
+                          outline: "none",
+                          width: "100%",
+                          boxShadow: `0 2px 4px ${r.color}15`
+                        }}
+                      >
+                        <option value="member">Team Member</option>
+                        <option value="head">Department Head</option>
+                      </select>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: "10px", paddingTop: "4px", borderTop: "1px solid #f1f5f9", marginTop: "4px" }}>
+          {/* Actions */}
+          <div style={{ display: "flex", gap: "10px", paddingTop: "4px", borderTop: "1px solid #f1f5f9", marginTop: "4px" }}>
               <button
                 type="submit"
                 disabled={addLoading}
@@ -147,7 +216,7 @@ const AddMemberModal = ({ ctx }) => {
                 {addLoading ? (
                   <><div style={{ width: "15px", height: "15px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /> Adding…</>
                 ) : (
-                  <><UserPlus style={{ width: "15px", height: "15px" }} /> Add Member</>
+                  <><UserPlus style={{ width: "15px", height: "15px" }} /> Add Employee</>
                 )}
               </button>
               <button

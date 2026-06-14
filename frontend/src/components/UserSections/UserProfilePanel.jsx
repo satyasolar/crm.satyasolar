@@ -1,5 +1,5 @@
 import React from "react";
-import { Mail, Shield, UserCheck, User, Trash2, Key, X } from "lucide-react";
+import { Mail, Shield, UserCheck, User, Trash2, Key, X, Phone, Calendar } from "lucide-react";
 
 const UserProfilePanel = ({ ctx }) => {
   const {
@@ -44,6 +44,8 @@ const UserProfilePanel = ({ ctx }) => {
           { icon: User,      label: "Employee ID", value: profileUser.employeeId || "N/A" },
           { icon: User,      label: "Full name",   value: profileUser.name },
           { icon: Mail,      label: "Email",       value: profileUser.email },
+          { icon: Phone,     label: "Phone",       value: profileUser.phone || "N/A" },
+          { icon: Calendar,  label: "Date of Birth", value: profileUser.dob || "N/A" },
           { icon: Shield,    label: "Role",        value: profileUser.role, capitalize: true },
           { icon: UserCheck, label: "Status",      value: "Active" },
         ].map(({ icon: Icon, label, value, capitalize }) => (
@@ -59,7 +61,7 @@ const UserProfilePanel = ({ ctx }) => {
         ))}
 
         {/* ── Admin Actions ──────────────────────────────────────────────── */}
-        {loggedInRole === "admin" && (
+        {(loggedInRole === "admin" || (localStorage.getItem("is_head") === "true" && loggedInRole === profileUser.role && !profileUser.isHead)) && (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px", borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
             <button
               onClick={() => {

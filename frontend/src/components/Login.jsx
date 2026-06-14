@@ -42,14 +42,19 @@ const Login = ({ setToken }) => {
         password,
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (error.message.includes("banned")) {
+          throw new Error("Your account has been suspended or deactivated. Please contact support.");
+        }
+        throw new Error(error.message);
+      }
 
       const { session, user } = data;
       const token = session.access_token;
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("name, role, status, employee_id")
+        .select("name, role, status, employee_id, is_head")
         .eq("id", user.id)
         .single();
 
@@ -63,8 +68,12 @@ const Login = ({ setToken }) => {
         );
       if (profile.status === "inactive")
         throw new Error("Account is deactivated. Please contact support.");
+      if (profile.status === "suspended") {
+        const suspendEnd = profile.suspended_until ? new Date(profile.suspended_until).toLocaleDateString() : "further notice";
+        throw new Error(`Account is suspended until ${suspendEnd}.`);
+      }
 
-      const { name, role, employee_id } = profile;
+      const { name, role, employee_id, is_head } = profile;
 
       localStorage.setItem("token", token);
       localStorage.setItem("userId", user.id);
@@ -72,6 +81,7 @@ const Login = ({ setToken }) => {
       localStorage.setItem("name", name);
       localStorage.setItem("email", user.email);
       localStorage.setItem("employeeId", employee_id || "N/A");
+      localStorage.setItem("is_head", is_head ? "true" : "false");
       setToken(token);
 
       toast.success(`Welcome back, ${name}!`);

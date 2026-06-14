@@ -60,20 +60,20 @@ const Footer = () => (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {[
             {
-              href: "mailto:info@rbcsolar.com",
+              href: "mailto:info@satyasolarsystems.com",
               Icon: Mail,
-              label: "info@rbcsolar.com",
+              label: "info@satyasolarsystems.com",
             },
             {
-              href: "https://wa.me/919935099756",
+              href: "https://wa.me/916386663156",
               Icon: MessageCircle,
-              label: "+91 99350 99756",
+              label: "+91 6386663156",
               ext: true,
             },
             {
-              href: "tel:+919793201124",
+              href: "tel:+916386663156",
               Icon: Phone,
-              label: "+91 97932 01124",
+              label: "+91 6386663156",
             },
           ].map(({ href, Icon, label, ext }) => (
             <a
@@ -145,11 +145,7 @@ const Footer = () => (
                 lineHeight: 1.7,
               }}
             >
-              {APP_CONFIG.companyAddressShort}
-              <br />
-              Lalbagh, Hazratganj
-              <br />
-              Lucknow – 226001
+              {APP_CONFIG.companyAddress}
             </p>
           </div>
         </div>

@@ -110,9 +110,9 @@ const Dashboard = ({
               }),
               userRole === "sales"
                 ? edgeFetch(EDGE.quotation, {
-                    action: "list",
-                    salesPerson: userName,
-                  })
+                  action: "list",
+                  salesPerson: userName,
+                })
                 : Promise.resolve([]),
             ]);
 
@@ -205,9 +205,9 @@ const Dashboard = ({
         // ── NORMAL MODE: original data fetching ──
         const reqs = [
           edgeFetch(EDGE.analytics, { action: "stats" }),
-          edgeFetch(EDGE.analytics, { 
-            action: "activity", 
-            ...(!isAdmin && { viewAsUserName: userName }) 
+          edgeFetch(EDGE.analytics, {
+            action: "activity",
+            ...(!isAdmin && { viewAsUserName: userName })
           }),
           edgeFetch(EDGE.workflow, { action: "get_all" }),
           edgeFetch(EDGE.analytics, { action: "pipeline" }),
@@ -382,6 +382,7 @@ const Dashboard = ({
               style={{ height: "180px", borderRadius: "14px" }}
             />
           </div>
+          <Footer />
         </main>
       </div>
     );
@@ -736,6 +737,7 @@ const Dashboard = ({
 
         {activeTab === "overview" && <OverviewTab ctx={ctx} />}
         {activeTab === "analytics" && <AnalyticsTab ctx={ctx} />}
+        <Footer />
       </main>
     </div>
   );

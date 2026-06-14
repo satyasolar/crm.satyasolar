@@ -28,22 +28,24 @@ import QuotationList from "./components/QuotationList";
 import ApprovedQuotations from "./pages/ApprovedQuotations";
 import FinalLeads from "./pages/FinalLeads";
 
-// Lazy-loaded Dashboards
+// Dashboards
 import AdminDashboard from "./pages/AdminDashboard";
 import SalesDashboard from "./pages/SalesDashboard";
 import RegistrationDashboard from "./pages/RegistrationDashboard";
-import BankingDashboard from "./pages/BankingDashboard";
+import FinanceDashboard from "./pages/FinanceDashboard";
 import FinanceTracking from "./pages/FinanceTracking";
-import InventoryDashboard from "./pages/InventoryDashboard";
-import InstallationDashboard from "./pages/InstallationDashboard";
-import ElectricalDashboard from "./pages/ElectricalDashboard";
+import ProjectDashboard from "./pages/ProjectDashboard";
+import WarehouseDashboard from "./pages/WarehouseDashboard";
+import NetMeteringDashboard from "./pages/NetMeteringDashboard";
+import QualityDashboard from "./pages/QualityDashboard";
 import SubsidyDashboard from "./pages/SubsidyDashboard";
+import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
 
 // Admin portal pages
 import DepartmentPortal from "./pages/DepartmentPortal";
 import EmployeeDrillDown from "./pages/EmployeeDrillDown";
 
-// New ERP pages
+// ERP pages
 import ProcurementPortal from "./pages/ProcurementPortal";
 import ProcurementDashboard from "./pages/ProcurementDashboard";
 import B2CDispatchPortal from "./pages/B2CDispatchPortal";
@@ -51,11 +53,6 @@ import WattageSettings from "./pages/WattageSettings";
 import CustomerPortal from "./pages/CustomerPortal";
 import AuditLogViewer from "./pages/AuditLogViewer";
 import DispatchCustomers from "./pages/DispatchCustomers";
-
-// New department dashboards
-import TechnicalDashboard from "./pages/TechnicalDashboard";
-import AccountsDashboard from "./pages/AccountsDashboard";
-import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
 
 // Public pages
 import TrackingPage from "./pages/TrackingPage";
@@ -65,30 +62,32 @@ const DashboardRedirect = () => {
   const token = localStorage.getItem("token");
   const role = (localStorage.getItem("role") || "").toLowerCase();
   if (!token) return <Navigate to="/login" replace />;
-  const dashboardPath =
-    role === "admin"
-      ? "/admin-dashboard"
-      : role === "sales"
-        ? "/sales-dashboard"
-        : role === "registration"
-          ? "/registration-dashboard"
-          : role === "banking"
-            ? "/banking-dashboard"
-            : role === "inventory"
-              ? "/inventory-dashboard"
-              : role === "field_installation"
-                  ? "/installation-dashboard"
-                  : role === "electrical"
-                    ? "/electrical-dashboard"
-                    : role === "subsidy"
-                      ? "/subsidy-dashboard"
-                      : role === "technical"
-                        ? "/technical-dashboard"
-                        : role === "accounts"
-                          ? "/accounts-dashboard"
-                          : role === "customer_service"
-                            ? "/customer-service-dashboard"
-                            : "/login";
+
+  const dashMap = {
+    admin: "/admin-dashboard",
+    sales: "/sales-dashboard",
+    registration: "/registration-dashboard",
+    // New consolidated roles
+    finance: "/finance-dashboard",
+    project: "/project-dashboard",
+    warehouse: "/warehouse-dashboard",
+    net_metering: "/net-metering-dashboard",
+    quality: "/quality-dashboard",
+    qa: "/quality-dashboard",
+    subsidy: "/subsidy-dashboard",
+    customer_service: "/customer-service-dashboard",
+    // Legacy roles — keep working for any existing users
+    banking: "/finance-dashboard",
+    accounts: "/finance-dashboard",
+    inventory: "/warehouse-dashboard",
+    procurement: "/warehouse-dashboard",
+    field_installation: "/project-dashboard",
+    field: "/project-dashboard",
+    technical: "/project-dashboard",
+    electrical: "/project-dashboard",
+  };
+
+  const dashboardPath = dashMap[role] || "/login";
   return <Navigate to={dashboardPath} replace />;
 };
 
@@ -305,7 +304,6 @@ function App() {
             path="/admin-dashboard"
             element={
               <ProtectedRoute role="admin">
-                {" "}
                 <AdminDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
@@ -314,7 +312,6 @@ function App() {
             path="/sales-dashboard"
             element={
               <ProtectedRoute role="sales">
-                {" "}
                 <SalesDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
@@ -323,79 +320,67 @@ function App() {
             path="/registration-dashboard"
             element={
               <ProtectedRoute role="registration">
-                {" "}
                 <RegistrationDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
+          {/* Finance Department (replaces banking + accounts) */}
           <Route
-            path="/banking-dashboard"
+            path="/finance-dashboard"
             element={
-              <ProtectedRoute role="banking">
-                {" "}
-                <BankingDashboard onLogout={handleLogout} />
+              <ProtectedRoute role={["finance", "banking", "accounts", "admin"]}>
+                <FinanceDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
+          {/* Project Department (replaces field_installation + technical + electrical) */}
           <Route
-            path="/inventory-dashboard"
+            path="/project-dashboard"
             element={
-              <ProtectedRoute role="inventory">
-                {" "}
-                <InventoryDashboard onLogout={handleLogout} />
+              <ProtectedRoute role={["project", "field", "field_installation", "technical", "electrical", "admin"]}>
+                <ProjectDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
+          {/* Warehouse Department (replaces inventory + procurement) */}
           <Route
-            path="/installation-dashboard"
+            path="/warehouse-dashboard"
             element={
-              <ProtectedRoute role="field_installation">
-                {" "}
-                <InstallationDashboard onLogout={handleLogout} />
+              <ProtectedRoute role={["warehouse", "inventory", "procurement", "admin"]}>
+                <WarehouseDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
+          {/* Net Metering Department */}
           <Route
-            path="/electrical-dashboard"
+            path="/net-metering-dashboard"
             element={
-              <ProtectedRoute role="electrical">
-                {" "}
-                <ElectricalDashboard onLogout={handleLogout} />
+              <ProtectedRoute role={["net_metering", "admin"]}>
+                <NetMeteringDashboard onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          {/* Quality Assurance Department */}
+          <Route
+            path="/quality-dashboard"
+            element={
+              <ProtectedRoute role={["quality", "qa", "admin"]}>
+                <QualityDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
           <Route
             path="/subsidy-dashboard"
             element={
-              <ProtectedRoute role="subsidy">
-                {" "}
+              <ProtectedRoute role={["subsidy", "admin"]}>
                 <SubsidyDashboard onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/technical-dashboard"
-            element={
-              <ProtectedRoute role="technical">
-                {" "}
-                <TechnicalDashboard onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/accounts-dashboard"
-            element={
-              <ProtectedRoute role="accounts">
-                {" "}
-                <AccountsDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
           <Route
             path="/customer-service-dashboard"
             element={
-              <ProtectedRoute role="customer_service">
-                {" "}
+              <ProtectedRoute role={["customer_service", "admin"]}>
                 <CustomerServiceDashboard onLogout={handleLogout} />
               </ProtectedRoute>
             }

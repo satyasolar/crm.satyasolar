@@ -674,7 +674,7 @@ const Cases = ({ onLogout }) => {
                   />
                 </button>
               )}
-              {["admin", "accounts"].includes(userRole) && (
+              {["admin", "finance", "accounts"].includes(userRole) && (
                 <button
                   onClick={() => handleExportCSV(tabFiltered)}
                   style={{

@@ -32,14 +32,14 @@ async function getAdminUser(
   if (error || !user) throw new Error("Unauthorized");
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, role, status")
+    .select("name, role, status, is_head")
     .eq("id", user.id)
     .single();
   if (!profile || profile.status === "inactive")
     throw new Error("Unauthorized");
-  if (profile.role?.toLowerCase() !== "admin")
-    throw new Error("Admin access required");
-  return { ...user, name: profile.name, role: profile.role?.toLowerCase() };
+  if (profile.role?.toLowerCase() !== "admin" && !profile.is_head)
+    throw new Error("Admin or Department Head access required");
+  return { ...user, name: profile.name, role: profile.role?.toLowerCase(), is_head: profile.is_head };
 }
 
 serve(async (req: Request) => {
@@ -53,13 +53,13 @@ serve(async (req: Request) => {
   );
 
   try {
-    await getAdminUser(req, supabase);
+    const adminUser = await getAdminUser(req, supabase);
     const body = await req.json().catch(() => ({}));
     const action = body.action || "";
 
     // ── CREATE USER ────────────────────────────────────────────────────────
     if (action === "create_user") {
-      const { name, email, role } = body;
+      const { name, email, role, phone, dob, isHead } = body;
 
       // Validation
       if (!name || !email || !role) {
@@ -78,22 +78,38 @@ serve(async (req: Request) => {
         "admin",
         "sales",
         "registration",
+        "finance",        // replaces banking + accounts
+        "project",        // replaces field_installation + technical + electrical
+        "warehouse",      // replaces inventory + procurement
+        "net_metering",   // new
+        "quality",        // new (QA)
+        "subsidy",
+        "customer_service",
+        // Legacy roles — kept for backward compatibility
         "banking",
+        "accounts",
         "inventory",
         "procurement",
         "field_installation",
-        "subsidy",
         "electrical",
         "technical",
-        "accounts",
-        "customer_service",
       ];
       if (!validRoles.includes(role)) {
         return jsonResponse({ message: `Invalid role: ${role}` }, 400);
       }
 
+      // Department Head restrictions
+      if (adminUser.role !== "admin") {
+        if (adminUser.role !== role) {
+          return jsonResponse({ message: "You can only create users in your own department" }, 403);
+        }
+        if (isHead) {
+          return jsonResponse({ message: "You cannot create a Department Head" }, 403);
+        }
+      }
+
       // Generate default password and Employee ID
-      const password = Deno.env.get("DEFAULT_PASSWORD") || "RBSCsolar@123";
+      const password = Deno.env.get("DEFAULT_PASSWORD") || "Satyasolar@1234";
       const employeeId = "EMP-" + Math.floor(1000 + Math.random() * 9000);
 
       // Create auth user
@@ -123,6 +139,9 @@ serve(async (req: Request) => {
         id: authData.user.id,
         name,
         role,
+        phone,
+        dob,
+        is_head: isHead || false,
         status: "active",
         is_first_login: true,
         employee_id: employeeId,
@@ -295,6 +314,9 @@ serve(async (req: Request) => {
             name,
             email: authData.user.email,
             role,
+            phone,
+            dob,
+            isHead: isHead || false,
             status: "active",
             isFirstLogin: true,
             employeeId,
@@ -306,12 +328,19 @@ serve(async (req: Request) => {
 
     // ── LIST ALL USERS ─────────────────────────────────────────────────────
     if (action === "list_users") {
-      // Get from profiles (has role + status + employee_id)
-      const { data: profiles, error } = await supabase
+      // Get from profiles (has role + status + employee_id + phone + dob + is_head)
+      let query = supabase
         .from("profiles")
         .select(
-          "id, name, role, status, is_first_login, created_at, employee_id",
+          "id, name, role, phone, dob, status, is_first_login, created_at, employee_id, is_head",
         );
+      
+      // If Department Head, only show their own department
+      if (adminUser.role !== "admin") {
+        query = query.eq("role", adminUser.role);
+      }
+
+      const { data: profiles, error } = await query;
       if (error) throw error;
 
       const profileMap = new Map();
@@ -329,7 +358,11 @@ serve(async (req: Request) => {
           name: p?.name || "Incomplete Account",
           email: u.email || "",
           role: p?.role || "sales",
+          phone: p?.phone || "",
+          dob: p?.dob || "",
+          isHead: p?.is_head || false,
           status: p?.status || "inactive",
+          suspendedUntil: p?.suspended_until || null,
           isFirstLogin: p?.is_first_login ?? true,
           createdAt: u.created_at,
           employeeId: p?.employee_id || "N/A",
@@ -343,6 +376,17 @@ serve(async (req: Request) => {
     if (action === "update_user") {
       const { userId, name, role, status } = body;
       if (!userId) return jsonResponse({ message: "userId required" }, 400);
+
+      // Department Head restrictions
+      if (adminUser.role !== "admin") {
+        const { data: targetProfile } = await supabase.from("profiles").select("role, is_head").eq("id", userId).single();
+        if (!targetProfile || targetProfile.role !== adminUser.role) {
+          return jsonResponse({ message: "You can only update users in your own department" }, 403);
+        }
+        if (targetProfile.is_head && (role || status)) {
+          return jsonResponse({ message: "You cannot update another Department Head" }, 403);
+        }
+      }
 
       const updatePayload: Record<string, unknown> = {};
       if (name !== undefined) updatePayload.name = name;
@@ -366,12 +410,78 @@ serve(async (req: Request) => {
       return jsonResponse({ message: "User updated successfully" });
     }
 
+    // ── UPDATE USER STATUS ──────────────────────────────────────────────────
+    if (action === "update_user_status") {
+      const { userId, status, suspendEndDate } = body;
+      if (!userId || !status) return jsonResponse({ message: "userId and status required" }, 400);
+
+      // Department Head restrictions
+      if (adminUser.role !== "admin") {
+        const { data: targetProfile } = await supabase.from("profiles").select("role, is_head").eq("id", userId).single();
+        if (!targetProfile || targetProfile.role !== adminUser.role) {
+          return jsonResponse({ message: "You can only update status of users in your own department" }, 403);
+        }
+        if (targetProfile.is_head) {
+          return jsonResponse({ message: "You cannot change status of another Department Head" }, 403);
+        }
+      }
+
+      let ban_duration = "none";
+      let suspended_until = null;
+
+      if (status === "inactive") {
+        ban_duration = "876000h"; // Effectively permanent (~100 years)
+      } else if (status === "suspended") {
+        if (!suspendEndDate) return jsonResponse({ message: "suspendEndDate is required" }, 400);
+        
+        const suspendEnd = new Date(suspendEndDate);
+        if (isNaN(suspendEnd.getTime())) return jsonResponse({ message: "Invalid suspendEndDate format" }, 400);
+
+        const now = new Date();
+        const diffMs = suspendEnd.getTime() - now.getTime();
+        if (diffMs <= 0) return jsonResponse({ message: "Suspend date must be in the future" }, 400);
+
+        // Convert ms to hours (rounding up to ensure full coverage of the day)
+        const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+        ban_duration = `${hours}h`;
+        
+        suspended_until = suspendEnd.toISOString();
+      } else if (status !== "active") {
+        return jsonResponse({ message: "Invalid status" }, 400);
+      }
+
+      // 1. Update the auth.users ban_duration natively
+      const { error: banError } = await supabase.auth.admin.updateUserById(userId, { ban_duration });
+      if (banError) throw banError;
+
+      // 2. Update profiles table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ status, suspended_until })
+        .eq("id", userId);
+
+      if (profileError) throw profileError;
+
+      return jsonResponse({ message: "User status updated successfully" });
+    }
+
     // ── DELETE USER ────────────────────────────────────────────────────────
     if (action === "delete_user") {
       const { userId } = body;
       if (!userId) return jsonResponse({ message: "userId required" }, 400);
 
-      // Delete profile first (auth cascade won't automatically delete profile)
+      // Department Head restrictions
+      if (adminUser.role !== "admin") {
+        const { data: targetProfile } = await supabase.from("profiles").select("role, is_head").eq("id", userId).single();
+        if (!targetProfile || targetProfile.role !== adminUser.role) {
+          return jsonResponse({ message: "You can only delete users in your own department" }, 403);
+        }
+        if (targetProfile.is_head) {
+          return jsonResponse({ message: "You cannot delete another Department Head" }, 403);
+        }
+      }
+
+      // Delete profile first
       await supabase.from("profiles").delete().eq("id", userId);
 
       // Delete auth user
@@ -389,6 +499,17 @@ serve(async (req: Request) => {
           { message: "userId and newPassword required" },
           400,
         );
+
+      // Department Head restrictions
+      if (adminUser.role !== "admin") {
+        const { data: targetProfile } = await supabase.from("profiles").select("role, is_head").eq("id", userId).single();
+        if (!targetProfile || targetProfile.role !== adminUser.role) {
+          return jsonResponse({ message: "You can only reset passwords for users in your own department" }, 403);
+        }
+        if (targetProfile.is_head) {
+          return jsonResponse({ message: "You cannot reset the password of another Department Head" }, 403);
+        }
+      }
 
       if (newPassword.length < 6) {
         return jsonResponse(

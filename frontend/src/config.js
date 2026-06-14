@@ -1,11 +1,10 @@
 export const APP_CONFIG = {
   companyName: "Satya Solar",
   shortName: "Satya",
-  supportEmail: "info@satyasolar.com",
-  supportPhone: "+91 80000 00000", // Replace with actual if needed
-  companyAddress:
-    "Satya Solar HQ",
-  companyAddressShort: "Satya Solar HQ",
+  supportEmail: "info@satyasolarsystems.com",
+  supportPhone: "+91 6386663156",
+  companyAddress: "2nd Floor Satya Business Park, 1 Nawal Kishore Road, Hazratganj, Lucknow-226001",
+  companyAddressShort: "Satya Solar Systems Pvt Ltd",
   logoPath: "/logo.svg",
   year: new Date().getFullYear(),
   trackingPrefix: "SATYA-", // Useful for generating Tracking IDs

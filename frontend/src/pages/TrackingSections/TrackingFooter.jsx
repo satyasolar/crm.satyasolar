@@ -25,14 +25,14 @@ export default function TrackingFooter() {
         <div>
           <div className="footer-heading">Contact</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <a href="mailto:info@rbcsolar.com" className="footer-link">
-              <span className="mat">mail</span> info@rbcsolar.com
+            <a href="mailto:info@satyasolarsystems.com" className="footer-link">
+              <span className="mat">mail</span> info@satyasolarsystems.com
             </a>
-            <a href="https://wa.me/919935099756" className="footer-link">
-              <span className="mat">chat_bubble</span> +91 99350 99756
+            <a href="https://wa.me/916386663156" className="footer-link">
+              <span className="mat">chat_bubble</span> +91 6386663156
             </a>
-            <a href="tel:+919793201124" className="footer-link">
-              <span className="mat">call</span> +91 97932 01124
+            <a href="tel:+916386663156" className="footer-link">
+              <span className="mat">call</span> +91 6386663156
             </a>
           </div>
         </div>
@@ -57,11 +57,7 @@ export default function TrackingFooter() {
                 Lucknow Headquarters
               </strong>
               <span className="footer-text">
-                {APP_CONFIG.companyAddressShort}
-                <br />
-                Lalbagh, Hazratganj
-                <br />
-                Lucknow - 226001
+                {APP_CONFIG.companyAddress}
               </span>
             </div>
           </div>

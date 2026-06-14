@@ -10,7 +10,7 @@ const ICONS = {
   Finance: "ti ti-report-money",
   "All Customers": "ti ti-users",
   "Quotation List": "ti ti-file-invoice",
-  Team: "ti ti-users-group",
+  Employee: "ti ti-users-group",
   "Create Case": "ti ti-circle-plus",
   Customers: "ti ti-users",
   "Quotation Form": "ti ti-file-plus",
@@ -37,7 +37,7 @@ const ICONS = {
 const getMobileNav = (role, dashPath) => {
   const home = { name: "Home", path: dashPath, icon: "ti ti-layout-dashboard" };
   const clients = { name: "Clients", path: "/cases", icon: "ti ti-users" };
-  const team = { name: "Team", path: "/users", icon: "ti ti-users-group" };
+  const team = { name: "Employee", path: "/users", icon: "ti ti-users-group" };
   const finance = {
     name: "Finance",
     path: "/finance-tracking",
@@ -47,11 +47,6 @@ const getMobileNav = (role, dashPath) => {
     name: "Quote",
     path: "/quotation-form",
     icon: "ti ti-file-plus",
-  };
-  const quotes = {
-    name: "Quotes",
-    path: "/quotations",
-    icon: "ti ti-file-invoice",
   };
   const newCase = {
     name: "New Case",
@@ -85,18 +80,25 @@ const getMobileNav = (role, dashPath) => {
     admin: [home, team, clients, audit],
     sales: [home, newCase, clients, track],
     registration: [home, newCase, clients, support],
+    // New consolidated roles
+    finance: [home, finance, clients, support],
+    project: [home, clients, track, support],
+    warehouse: [home, dispatch, procure, clients],
+    net_metering: [home, clients, support, support],
+    quality: [home, clients, support, support],
+    qa: [home, clients, support, support],
+    subsidy: [home, clients, support, support],
+    customer_service: [home, clients, support, support],
+    // Legacy support
     banking: [home, finance, clients, support],
+    accounts: [home, finance, clients, support],
     inventory: [home, dispatch, procure, clients],
     field_installation: [home, clients, track, support],
     electrical: [home, clients, support, support],
-    subsidy: [home, clients, support, support],
     technical: [home, clients, support, support],
-    accounts: [home, finance, clients, support],
-    customer_service: [home, clients, support, support],
   };
-  // Remove duplicates for roles with only 2 middle tabs
+  // Remove duplicates
   const tabs = maps[role] || [home, clients, support, support];
-  // Deduplicate (in case same tab appears twice for simple roles)
   const seen = new Set();
   return tabs.filter((t) => {
     if (seen.has(t.path)) return false;
@@ -120,7 +122,13 @@ const NAV = {
       items: [
         { name: "All Customers", path: "/cases" },
         { name: "Quotation List", path: "/quotations" },
-        { name: "Team", path: "/users" },
+        {
+          name: "Employee",
+          subItems: [
+            { name: "Employee List", path: "/users", icon: "ti ti-list" },
+            { name: "Employee Add", path: "/users?action=add", icon: "ti ti-user-plus" },
+          ],
+        },
       ],
     },
     {
@@ -142,22 +150,33 @@ const NAV = {
 };
 
 /* ── Role-based navigation builder ──────────────────────────────────────── */
-const getRoleGroups = (role) => {
+const getRoleGroups = (role, isHead = false) => {
   const dashMap = {
     sales: "/sales-dashboard",
     registration: "/registration-dashboard",
-    banking: "/banking-dashboard",
-    inventory: "/inventory-dashboard",
-    field_installation: "/installation-dashboard",
-    electrical: "/electrical-dashboard",
+    // New consolidated roles
+    finance: "/finance-dashboard",
+    project: "/project-dashboard",
+    warehouse: "/warehouse-dashboard",
+    net_metering: "/net-metering-dashboard",
+    quality: "/quality-dashboard",
+    qa: "/quality-dashboard",
     subsidy: "/subsidy-dashboard",
-    technical: "/technical-dashboard",
-    accounts: "/accounts-dashboard",
     customer_service: "/customer-service-dashboard",
+    // Legacy support
+    banking: "/finance-dashboard",
+    accounts: "/finance-dashboard",
+    inventory: "/warehouse-dashboard",
+    field_installation: "/project-dashboard",
+    field: "/project-dashboard",
+    electrical: "/project-dashboard",
+    technical: "/project-dashboard",
   };
 
+  let groups = [];
+
   if (role === "sales") {
-    return [
+    groups = [
       {
         group: "Workspace",
         items: [
@@ -168,35 +187,53 @@ const getRoleGroups = (role) => {
         ],
       },
     ];
-  }
-
-  if (role === "technical") {
-    return [
+  } else if (role === "registration") {
+    groups = [
       {
         group: "Workspace",
         items: [
-          { name: "Dashboard", path: "/technical-dashboard" },
+          { name: "Dashboard", path: "/registration-dashboard" },
+          { name: "Create Case", path: "/create-case" },
           { name: "Customers", path: "/cases" },
         ],
       },
     ];
-  }
-
-  if (role === "accounts") {
-    return [
+  } else if (role === "finance" || role === "banking" || role === "accounts") {
+    groups = [
       {
         group: "Workspace",
         items: [
-          { name: "Dashboard", path: "/accounts-dashboard" },
+          { name: "Dashboard", path: "/finance-dashboard" },
           { name: "Customers", path: "/cases" },
           { name: "Finance", path: "/finance-tracking" },
         ],
       },
     ];
-  }
-
-  if (role === "customer_service") {
-    return [
+  } else if (role === "project" || role === "field_installation" || role === "field" || role === "technical" || role === "electrical") {
+    groups = [
+      {
+        group: "Workspace",
+        items: [
+          { name: "Dashboard", path: dashMap[role] || "/project-dashboard" },
+          { name: "Customers", path: "/cases" },
+          { name: "Tracking", path: "/track", external: true },
+        ],
+      },
+    ];
+  } else if (role === "warehouse" || role === "inventory" || role === "procurement") {
+    groups = [
+      {
+        group: "Workspace",
+        items: [
+          { name: "Dashboard", path: dashMap[role] || "/warehouse-dashboard" },
+          { name: "Customers", path: "/cases" },
+          { name: "Dispatch", path: "/b2c-dispatch" },
+          { name: "Procurement", path: "/procurement-portal" },
+        ],
+      },
+    ];
+  } else if (role === "customer_service") {
+    groups = [
       {
         group: "Workspace",
         items: [
@@ -205,53 +242,61 @@ const getRoleGroups = (role) => {
         ],
       },
     ];
-  }
-
-  if (role === "inventory") {
-    return [
+  } else {
+    // All other roles (subsidy, net_metering, quality, qa): Dashboard + Customers
+    groups = [
       {
         group: "Workspace",
         items: [
           { name: "Dashboard", path: dashMap[role] || "/admin-dashboard" },
           { name: "Customers", path: "/cases" },
-          { name: "Dispatch", path: "/b2c-dispatch" },
-          { name: "Procurement", path: "/procurement-portal" },
         ],
       },
     ];
   }
 
-  // All other operational roles: Dashboard + Customers (+ extras per role)
-  const items = [
-    { name: "Dashboard", path: dashMap[role] || "/admin-dashboard" },
-    { name: "Customers", path: "/cases" },
-  ];
-  if (role === "registration") {
-    items.splice(1, 0, { name: "Create Case", path: "/create-case" });
-  }
-  if (role === "banking") {
-    items.push({ name: "Finance", path: "/finance-tracking" });
-  }
-  // All roles get Customers access
-  return [
-    {
-      group: "Workspace",
+  if (isHead && role !== "admin") {
+    groups.push({
+      group: "Management",
       items: [
-        ...items
-      ]
-    }
-  ];
+        {
+          name: "Employee",
+          subItems: [
+            { name: "Employee List", path: "/users", icon: "ti ti-list" },
+            { name: "Employee Add", path: "/users?action=add", icon: "ti ti-user-plus" },
+          ],
+        },
+      ],
+    });
+  }
+
+  return groups;
 };
 
 /* ── Role display label ──────────────────────────────────────────────────── */
 const getRoleLabel = (role) => {
-  if (role === "field_installation") return "Installation";
-  if (role === "admin") return "Admin";
-  if (role === "sales") return "Sales";
-  if (role === "technical") return "Technical QA";
-  if (role === "accounts") return "Accounts";
-  if (role === "customer_service") return "Customer Service";
-  return role.charAt(0).toUpperCase() + role.slice(1);
+  const labels = {
+    admin: "Admin",
+    sales: "Sales",
+    registration: "Registration",
+    finance: "Finance",
+    banking: "Finance",
+    accounts: "Finance",
+    project: "Project",
+    field_installation: "Project",
+    field: "Project",
+    technical: "Project",
+    electrical: "Project",
+    warehouse: "Warehouse",
+    inventory: "Warehouse",
+    procurement: "Warehouse",
+    net_metering: "Net Metering",
+    quality: "Quality QA",
+    qa: "Quality QA",
+    subsidy: "Subsidy",
+    customer_service: "Customer Service",
+  };
+  return labels[role] || (role.charAt(0).toUpperCase() + role.slice(1));
 };
 
 /* ── Role accent color ───────────────────────────────────────────────────── */
@@ -259,13 +304,21 @@ const ROLE_COLORS = {
   admin: "#2563EB",
   sales: "#7C3AED",
   registration: "#0EA5E9",
+  finance: "#F59E0B",
   banking: "#F59E0B",
-  inventory: "#10B981",
+  accounts: "#F59E0B",
+  project: "#F97316",
   field_installation: "#F97316",
+  field: "#F97316",
+  technical: "#F97316",
   electrical: "#EF4444",
+  warehouse: "#10B981",
+  inventory: "#10B981",
+  procurement: "#10B981",
+  net_metering: "#06B6D4",
+  quality: "#8B5CF6",
+  qa: "#8B5CF6",
   subsidy: "#EC4899",
-  technical: "#06B6D4",
-  accounts: "#84CC16",
   customer_service: "#A78BFA",
 };
 
@@ -283,6 +336,11 @@ const Sidebar = ({ onLogout }) => {
     (localStorage.getItem("role") || "user").toLowerCase(),
   );
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openDropdowns, setOpenDropdowns] = useState({});
+
+  const toggleDropdown = (name) => {
+    setOpenDropdowns((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
 
   const initials = userName
     .split(" ")
@@ -363,7 +421,7 @@ const Sidebar = ({ onLogout }) => {
         if (!user) return;
         const { data: profile } = await supabase
           .from("profiles")
-          .select("name, role")
+          .select("name, role, is_head")
           .eq("id", user.id)
           .single();
         if (profile) {
@@ -374,6 +432,9 @@ const Sidebar = ({ onLogout }) => {
           if (profile.role) {
             localStorage.setItem("role", profile.role);
             setUserRole(profile.role.toLowerCase());
+          }
+          if (profile.is_head !== undefined) {
+            localStorage.setItem("is_head", profile.is_head ? "true" : "false");
           }
         }
       } catch {
@@ -488,9 +549,68 @@ const Sidebar = ({ onLogout }) => {
               style={{ display: "flex", flexDirection: "column", gap: "1px" }}
             >
               {items.map((item) => {
+                const iconCls = ICONS[item.name] || "ti ti-point";
+
+                // Render Dropdown item
+                if (item.subItems) {
+                  const isOpen = openDropdowns[item.name];
+                  const isAnySubActive = item.subItems.some((sub) => {
+                    const subPath = sub.path.split("?")[0];
+                    if (sub.path.includes("?")) {
+                      return location.pathname === subPath && location.search.includes(sub.path.split("?")[1]);
+                    }
+                    return location.pathname === subPath && !location.search.includes("action=add");
+                  });
+
+                  return (
+                    <div key={item.name} style={{ display: "flex", flexDirection: "column" }}>
+                      <button
+                        onClick={() => toggleDropdown(item.name)}
+                        className={`nav-item${isAnySubActive ? " active" : ""}`}
+                        title={item.name}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <i className={iconCls} style={{ fontSize: "15px", width: "18px", textAlign: "center", flexShrink: 0 }} />
+                          <span style={{ flex: 1, textAlign: "left" }}>{item.name}</span>
+                        </div>
+                        <i className={`ti ti-chevron-${isOpen ? "up" : "down"}`} style={{ fontSize: "14px", opacity: 0.6 }} />
+                      </button>
+                      
+                      {isOpen && (
+                        <div style={{ display: "flex", flexDirection: "column", paddingLeft: "14px", marginTop: "2px", gap: "2px" }}>
+                          {item.subItems.map((sub) => {
+                            const subPath = sub.path.split("?")[0];
+                            const hasQuery = sub.path.includes("?");
+                            let isSubActive = false;
+                            
+                            if (hasQuery) {
+                              isSubActive = location.pathname === subPath && location.search.includes(sub.path.split("?")[1]);
+                            } else {
+                              isSubActive = location.pathname === subPath && !location.search.includes("action=add");
+                            }
+
+                            return (
+                              <button
+                                key={sub.name}
+                                onClick={() => handleNav(sub)}
+                                className={`nav-item${isSubActive ? " active" : ""}`}
+                                title={sub.name}
+                                style={{ padding: "8px 12px", fontSize: "13px" }}
+                              >
+                                <i className={sub.icon || "ti ti-point"} style={{ fontSize: "14px", width: "18px", textAlign: "center", flexShrink: 0 }} />
+                                <span style={{ flex: 1, textAlign: "left" }}>{sub.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 const isActive =
                   !item.external && location.pathname === item.path;
-                const iconCls = ICONS[item.name] || "ti ti-point";
                 return (
                   <button
                     key={item.name}

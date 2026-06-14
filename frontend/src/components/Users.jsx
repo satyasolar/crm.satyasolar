@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { edgeFetch, EDGE } from "../lib/supabaseClient";
 import toast from "react-hot-toast";
 import Sidebar from "./Sidebar";
@@ -11,21 +12,27 @@ import UserProfilePanel from "./UserSections/UserProfilePanel";
 import AddMemberModal from "./UserSections/AddMemberModal";
 import DeleteModal from "./UserSections/DeleteModal";
 import ResetPasswordModal from "./UserSections/ResetPasswordModal";
+import SuspendModal from "./UserSections/SuspendModal";
 
 const Users = ({ onLogout }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(searchParams.get("action") === "add");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [profileUser, setProfileUser] = useState(null); // admin panel side drawer
   const [newPassword, setNewPassword] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
+    dob: "",
     role: "sales",
+    isHead: false,
   });
   const [addLoading, setAddLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -55,6 +62,20 @@ const Users = ({ onLogout }) => {
     };
   }, [showAddModal, showDeleteModal, showResetModal]);
 
+  // Sync modal with URL params
+  useEffect(() => {
+    if (searchParams.get("action") === "add") {
+      setShowAddModal(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!showAddModal && searchParams.get("action") === "add") {
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [showAddModal, searchParams, setSearchParams]);
+
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     setAddLoading(true);
@@ -62,7 +83,7 @@ const Users = ({ onLogout }) => {
       await edgeFetch(EDGE.admin, { action: "create_user", ...formData });
       toast.success(`${formData.name} added successfully`);
       setShowAddModal(false);
-      setFormData({ name: "", email: "", role: "sales" });
+      setFormData({ name: "", email: "", phone: "", dob: "", role: "sales", isHead: false });
       fetchUsers();
     } catch (err) {
       toast.error(err.message || "Failed to add user");
@@ -110,6 +131,25 @@ const Users = ({ onLogout }) => {
     }
   };
 
+  const handleStatusChange = async (userId, newStatus, suspendEndDate = null) => {
+    setActionLoading(true);
+    try {
+      await edgeFetch(EDGE.admin, {
+        action: "update_user_status",
+        userId,
+        status: newStatus,
+        suspendEndDate,
+      });
+      toast.success("User status updated");
+      setShowSuspendModal(false);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.message || "Failed to update status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Filter
   const q = search.toLowerCase();
   const filtered = users.filter(
@@ -127,10 +167,11 @@ const Users = ({ onLogout }) => {
     showAddModal, setShowAddModal,
     showDeleteModal, setShowDeleteModal,
     showResetModal, setShowResetModal,
+    showSuspendModal, setShowSuspendModal,
     newPassword, setNewPassword,
     formData, setFormData,
     addLoading, actionLoading,
-    handleAddSubmit, handleDeleteUser, handleResetPassword,
+    handleAddSubmit, handleDeleteUser, handleResetPassword, handleStatusChange,
   };
 
   if (loading)
@@ -151,7 +192,7 @@ const Users = ({ onLogout }) => {
       <Sidebar onLogout={onLogout} />
 
       <main style={{ flex: 1, marginLeft: "var(--main-offset)", padding: "28px 32px" }}>
-        <Header title="Team" subtitle="Manage user accounts and access permissions" onLogout={onLogout} />
+        <Header title="Employee" subtitle="Manage user accounts and access permissions" onLogout={onLogout} />
 
         {/* Toolbar */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", gap: "12px" }}>
@@ -166,7 +207,7 @@ const Users = ({ onLogout }) => {
               style={{ paddingLeft: "36px" }}
             />
           </div>
-          {loggedInRole === "admin" && (
+          {(loggedInRole === "admin" || localStorage.getItem("is_head") === "true") && (
             <button onClick={() => setShowAddModal(true)} className="btn btn-primary btn-sm" style={{ whiteSpace: "nowrap" }}>
               <UserPlus style={{ width: "14px", height: "14px" }} />
               Add member
@@ -189,6 +230,7 @@ const Users = ({ onLogout }) => {
       <AddMemberModal ctx={ctx} />
       <DeleteModal ctx={ctx} />
       <ResetPasswordModal ctx={ctx} />
+      <SuspendModal ctx={ctx} />
     </div>
   );
 };

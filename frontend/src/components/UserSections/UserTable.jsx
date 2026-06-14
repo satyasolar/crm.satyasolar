@@ -8,7 +8,10 @@ const UserTable = ({ ctx }) => {
     profileUser, setProfileUser,
     loggedInRole,
     setSelectedUser, setShowResetModal, setShowDeleteModal,
+    handleStatusChange, setShowSuspendModal,
   } = ctx;
+
+  const isHeadUser = localStorage.getItem("is_head") === "true";
 
   return (
     <>
@@ -21,7 +24,7 @@ const UserTable = ({ ctx }) => {
               <th>Employee ID</th>
               <th>Role</th>
               <th>Status</th>
-              {loggedInRole === "admin" && (
+              {(loggedInRole === "admin" || isHeadUser) && (
                 <th style={{ textAlign: "right" }}>Actions</th>
               )}
             </tr>
@@ -30,6 +33,7 @@ const UserTable = ({ ctx }) => {
             {filtered.map((user) => {
               const rm = getRoleMeta(user.role);
               const isActive = profileUser?.id === user.id;
+              const canAdmin = loggedInRole === "admin" || (isHeadUser && loggedInRole === user.role && !user.isHead);
               return (
                 <tr
                   key={user.id}
@@ -53,29 +57,71 @@ const UserTable = ({ ctx }) => {
                     </span>
                   </td>
                   <td>
-                    <span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "11.5px", fontWeight: 600, background: rm.bg, color: rm.text, border: `1px solid ${rm.border}`, textTransform: "capitalize" }}>
-                      {rm.label}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <div className="status-dot online" />
-                      <span style={{ fontSize: "12.5px", color: "#15803d", fontWeight: 500 }}>Active</span>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                      <span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "11.5px", fontWeight: 600, background: rm.bg, color: rm.text, border: `1px solid ${rm.border}`, textTransform: "capitalize" }}>
+                        {rm.label}
+                      </span>
+                      {user.isHead && (
+                        <span style={{ padding: "3px 8px", borderRadius: "20px", fontSize: "10.5px", fontWeight: 700, background: "#f3e8ff", color: "#6b21a8", border: "1px solid #d8b4fe", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+                          Head
+                        </span>
+                      )}
                     </div>
                   </td>
-                  {loggedInRole === "admin" && (
-                    <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px" }}>
-                        <button title="Reset password" onClick={() => { setSelectedUser(user); setShowResetModal(true); }} className="btn btn-ghost btn-sm" style={{ padding: "6px 8px" }}>
-                          <Key style={{ width: "13px", height: "13px" }} />
-                        </button>
-                        <button title="Remove user" onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }} className="btn btn-sm" style={{ padding: "6px 8px", background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" }}>
-                          <Trash2 style={{ width: "13px", height: "13px" }} />
-                        </button>
-                        <button title="View profile" onClick={() => setProfileUser(isActive ? null : user)} className="btn btn-ghost btn-sm" style={{ padding: "6px 8px" }}>
-                          <ChevronRight style={{ width: "13px", height: "13px", transform: isActive ? "rotate(90deg)" : "none", transition: "0.2s" }} />
-                        </button>
+                  <td>
+                    {canAdmin ? (
+                      <select
+                        value={user.status || "active"}
+                        onChange={(e) => {
+                          const newStatus = e.target.value;
+                          if (newStatus === "suspended") {
+                            setSelectedUser(user);
+                            setShowSuspendModal(true);
+                          } else {
+                            handleStatusChange(user.id, newStatus);
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          border: "1px solid var(--border)",
+                          background: "var(--surface)",
+                          color: user.status === "active" ? "#15803d" : user.status === "suspended" ? "#d97706" : "#b91c1c",
+                          cursor: "pointer",
+                          outline: "none"
+                        }}
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspend</option>
+                      </select>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <div className={`status-dot ${user.status === "active" ? "online" : ""}`} style={{ background: user.status === "active" ? "#15803d" : user.status === "suspended" ? "#d97706" : "#b91c1c" }} />
+                        <span style={{ fontSize: "12.5px", color: user.status === "active" ? "#15803d" : user.status === "suspended" ? "#d97706" : "#b91c1c", fontWeight: 500, textTransform: "capitalize" }}>
+                          {user.status || "active"}
+                        </span>
                       </div>
+                    )}
+                  </td>
+                  {(loggedInRole === "admin" || isHeadUser) && (
+                    <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
+                      {canAdmin && (
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px" }}>
+                          <button title="Reset password" onClick={() => { setSelectedUser(user); setShowResetModal(true); }} className="btn btn-ghost btn-sm" style={{ padding: "6px 8px" }}>
+                            <Key style={{ width: "13px", height: "13px" }} />
+                          </button>
+                          <button title="Remove user" onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }} className="btn btn-sm" style={{ padding: "6px 8px", background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" }}>
+                            <Trash2 style={{ width: "13px", height: "13px" }} />
+                          </button>
+                          <button title="View profile" onClick={() => setProfileUser(isActive ? null : user)} className="btn btn-ghost btn-sm" style={{ padding: "6px 8px" }}>
+                            <ChevronRight style={{ width: "13px", height: "13px", transform: isActive ? "rotate(90deg)" : "none", transition: "0.2s" }} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -105,6 +151,7 @@ const UserTable = ({ ctx }) => {
         {filtered.map((user) => {
           const rm = getRoleMeta(user.role);
           const isActive = profileUser?.id === user.id;
+          const canAdmin = loggedInRole === "admin" || (isHeadUser && loggedInRole === user.role && !user.isHead);
           return (
             <div
               key={user.id}
@@ -121,9 +168,43 @@ const UserTable = ({ ctx }) => {
                     <p style={{ fontSize: "13px", color: "var(--text-4)" }}>{user.email}</p>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <div className="status-dot online" />
-                  <span style={{ fontSize: "12px", color: "#15803d", fontWeight: 600 }}>Active</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
+                  {canAdmin ? (
+                    <select
+                      value={user.status || "active"}
+                      onChange={(e) => {
+                        const newStatus = e.target.value;
+                        if (newStatus === "suspended") {
+                          setSelectedUser(user);
+                          setShowSuspendModal(true);
+                        } else {
+                          handleStatusChange(user.id, newStatus);
+                        }
+                      }}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        border: "1px solid var(--border)",
+                        background: "var(--surface)",
+                        color: user.status === "active" ? "#15803d" : user.status === "suspended" ? "#d97706" : "#b91c1c",
+                        cursor: "pointer",
+                        outline: "none"
+                      }}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspend</option>
+                    </select>
+                  ) : (
+                    <>
+                      <div className={`status-dot ${user.status === "active" ? "online" : ""}`} style={{ background: user.status === "active" ? "#15803d" : user.status === "suspended" ? "#d97706" : "#b91c1c" }} />
+                      <span style={{ fontSize: "12px", color: user.status === "active" ? "#15803d" : user.status === "suspended" ? "#d97706" : "#b91c1c", fontWeight: 600, textTransform: "capitalize" }}>
+                        {user.status || "active"}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", background: "var(--surface-2)", padding: "12px", borderRadius: "8px" }}>
@@ -133,14 +214,19 @@ const UserTable = ({ ctx }) => {
                 </div>
                 <div>
                   <div style={{ fontSize: "11px", color: "var(--text-4)", textTransform: "uppercase", fontWeight: 600 }}>Role</div>
-                  <div style={{ marginTop: "4px" }}>
+                  <div style={{ marginTop: "4px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     <span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "11.5px", fontWeight: 600, background: rm.bg, color: rm.text, border: `1px solid ${rm.border}`, textTransform: "capitalize", display: "inline-block" }}>
                       {rm.label}
                     </span>
+                    {user.isHead && (
+                      <span style={{ padding: "3px 8px", borderRadius: "20px", fontSize: "10.5px", fontWeight: 700, background: "#f3e8ff", color: "#6b21a8", border: "1px solid #d8b4fe", textTransform: "uppercase", letterSpacing: "0.02em", display: "inline-block" }}>
+                        Head
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
-              {loggedInRole === "admin" && (
+              {(loggedInRole === "admin" || isHeadUser) && canAdmin && (
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }} onClick={(e) => e.stopPropagation()}>
                   <button title="Reset password" onClick={() => { setSelectedUser(user); setShowResetModal(true); }} className="btn btn-secondary btn-sm" style={{ padding: "6px 12px" }}>
                     <Key style={{ width: "13px", height: "13px" }} />

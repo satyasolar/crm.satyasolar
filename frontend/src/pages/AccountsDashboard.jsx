@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { edgeFetch, EDGE } from "../lib/supabaseClient";
 import Sidebar from "../components/Sidebar";
+import Footer from "../components/Footer";
 import { IndianRupee, TrendingUp, AlertCircle, CheckCircle2, Search, ChevronDown, Download } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -186,6 +187,7 @@ export default function AccountsDashboard({ onLogout }) {
             ))}
           </div>
         )}
+        <Footer />
       </main>
     </div>
   );

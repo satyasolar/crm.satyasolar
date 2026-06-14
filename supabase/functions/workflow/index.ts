@@ -99,10 +99,14 @@ async function getUser(
 function maskDocumentsForRole(role: string, docsObj: any) {
   if (!docsObj || typeof docsObj !== "object") return {};
   const restrictedRoles = [
+    "warehouse",        // new role
+    "project",          // new role
+    // Legacy
     "inventory",
     "field_installation",
     "electrical",
     "store",
+    "field",
   ];
   if (!restrictedRoles.includes(role)) return docsObj;
 
@@ -139,7 +143,7 @@ function maskDocumentsForRole(role: string, docsObj: any) {
 function maskCaseDataForRole(role: string, caseRow: any): any {
   if (!caseRow || typeof caseRow !== "object") return caseRow;
   // Full access roles — return as-is
-  if (["admin", "finance", "sales", "qa"].includes(role)) return caseRow;
+  if (["admin", "finance", "banking", "sales", "qa", "quality", "net_metering", "customer_service"].includes(role)) return caseRow;
 
   // ── Registration: full access EXCEPT payment_mode (hide completely) ──────
   // Even Network Tab inspection will show payment_mode: null for this role.
@@ -183,7 +187,7 @@ function maskCaseDataForRole(role: string, caseRow: any): any {
       "installation_note",
       "site_visit_date",
     );
-  } else if (role === "field") {
+  } else if (role === "field" || role === "project" || role === "field_installation" || role === "technical" || role === "electrical") {
     // Field sees: customer_name, tracking_id, id, current_stage, assigned_team,
     //                    load_required, status, address, phone, geo_location,
     //                    site_visit_date, installation_note, documents (masked)
@@ -814,7 +818,7 @@ serve(async (req) => {
         action_type: "stage_update",
         remarks: isSubsidyComplete
           ? body.remarks ||
-            "Subsidy Registration Completed — Customer marked as Completed"
+          "Subsidy Registration Completed — Customer marked as Completed"
           : body.remarks,
       });
 
@@ -884,7 +888,7 @@ serve(async (req) => {
                     (i) =>
                       i.category?.toLowerCase() === "inverter" &&
                       i.brand?.toLowerCase() ===
-                        specs.inverterBrand?.toLowerCase(),
+                      specs.inverterBrand?.toLowerCase(),
                   ) ||
                   invItems.find(
                     (i) => i.category?.toLowerCase() === "inverter",
@@ -898,7 +902,7 @@ serve(async (req) => {
                     (i) =>
                       i.category?.toLowerCase() === "battery" &&
                       i.brand?.toLowerCase() ===
-                        specs.batteryBrand?.toLowerCase(),
+                      specs.batteryBrand?.toLowerCase(),
                   ) ||
                   invItems.find((i) => i.category?.toLowerCase() === "battery");
                 if (bat)
@@ -1240,7 +1244,7 @@ serve(async (req) => {
         updatePayload.quotation_amount !== undefined &&
         oldCase &&
         Number(oldCase.quotation_amount) !==
-          Number(updatePayload.quotation_amount)
+        Number(updatePayload.quotation_amount)
       ) {
         await supabase.from("case_history").insert({
           case_id: body.caseId,
@@ -1627,10 +1631,10 @@ serve(async (req) => {
       const updatedList = checklist.map((item: any) =>
         item._id === itemId
           ? {
-              ...item,
-              checked: !item.checked,
-              checkedBy: !item.checked ? user.name : null,
-            }
+            ...item,
+            checked: !item.checked,
+            checkedBy: !item.checked ? user.name : null,
+          }
           : item,
       );
 
