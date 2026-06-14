@@ -66,7 +66,6 @@ const UserTable = ({ ctx }) => {
               <th style={thStyle}>Designation</th>
               <th style={thStyle}>Email</th>
               <th style={thStyle}>Mobile</th>
-              <th style={thStyle}>Password</th>
               <th style={thStyle}>Status</th>
               <th style={thStyle}>Registration Date</th>
               {canAdmin && <th style={{ ...thStyle, textAlign: "center" }}>Action</th>}
@@ -137,11 +136,6 @@ const UserTable = ({ ctx }) => {
                   {/* Mobile */}
                   <td style={tdStyle}>
                     <span style={{ fontSize: "12.5px", color: "#475569" }}>{user.phone || "—"}</span>
-                  </td>
-
-                  {/* Password (masked) */}
-                  <td style={tdStyle}>
-                    <span style={{ fontSize: "13px", color: "#9ca3af", letterSpacing: "2px" }}>••••••••</span>
                   </td>
 
                   {/* Status */}
