@@ -255,8 +255,8 @@ const UserTable = ({ ctx }) => {
                   <button onClick={() => { setSelectedUser(user); setShowDesignationModal(true); }} style={{ padding: "8px 12px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "6px", cursor: "pointer" }}>
                     <Edit2 style={{ width: "13px", height: "13px", color: "#2563eb" }} />
                   </button>
-                  <button onClick={() => { setSelectedUser(user); setShowResetModal(true); }} style={{ padding: "8px 12px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "6px", cursor: "pointer" }}>
-                    <Key style={{ width: "13px", height: "13px", color: "#2563eb" }} />
+                  <button onClick={() => { setSelectedUser(user); setShowDetailsPanel(true); }} style={{ padding: "8px 12px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "6px", cursor: "pointer" }}>
+                    <Edit2 style={{ width: "13px", height: "13px", color: "#2563eb" }} />
                   </button>
                   <button onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }} style={{ padding: "8px 12px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "6px", cursor: "pointer" }}>
                     <Trash2 style={{ width: "13px", height: "13px", color: "#be123c" }} />
