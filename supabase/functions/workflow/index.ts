@@ -945,7 +945,7 @@ serve(async (req) => {
               // 1. Panels
               if (specs.panelCount) {
                 const panel = invItems.find(
-                  (i) => i.category?.toLowerCase() === "solar panel",
+                  (i: any) => i.category?.toLowerCase() === "solar panel",
                 );
                 if (panel)
                   itemsToDeduct.push({
@@ -957,13 +957,13 @@ serve(async (req) => {
               if (specs.inverterBrand) {
                 const inv =
                   invItems.find(
-                    (i) =>
+                    (i: any) =>
                       i.category?.toLowerCase() === "inverter" &&
                       i.brand?.toLowerCase() ===
                       specs.inverterBrand?.toLowerCase(),
                   ) ||
                   invItems.find(
-                    (i) => i.category?.toLowerCase() === "inverter",
+                    (i: any) => i.category?.toLowerCase() === "inverter",
                   );
                 if (inv) itemsToDeduct.push({ item: inv, qty: 1 }); // usually 1 inverter
               }
@@ -971,12 +971,12 @@ serve(async (req) => {
               if (specs.batteryBrand && specs.batteryCount) {
                 const bat =
                   invItems.find(
-                    (i) =>
+                    (i: any) =>
                       i.category?.toLowerCase() === "battery" &&
                       i.brand?.toLowerCase() ===
                       specs.batteryBrand?.toLowerCase(),
                   ) ||
-                  invItems.find((i) => i.category?.toLowerCase() === "battery");
+                  invItems.find((i: any) => i.category?.toLowerCase() === "battery");
                 if (bat)
                   itemsToDeduct.push({
                     item: bat,
@@ -1141,11 +1141,11 @@ serve(async (req) => {
               emailErr,
             );
             await supabase.from("email_logs").insert({
-              recipient_email: customerEmail,
+              recipient_email: caseObj.email || "",
               email_type: "tracking_id",
               status: "failed",
               error_message: emailErr.message,
-              reference_id: trackingId,
+              reference_id: caseObj.system_specs?.tracking_id || caseObj.id,
             });
           }
         };
